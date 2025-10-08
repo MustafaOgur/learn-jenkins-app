@@ -24,10 +24,10 @@ pipeline {
         */
 
         stage('Run Tests') {
-            parallel{
+            parallel {
                 stage('Unit Test') {
-                    agent{
-                        docker{
+                    agent {
+                        docker {
                             image 'node:18-alpine'
                             reuseNode true
                         }
@@ -38,15 +38,16 @@ pipeline {
                             npm test
                         '''
                     }
-                    post{
-                        always{
+                    post {
+                        always {
                             junit 'jest-results/junit.xml'
+                        }
                     }
                 }
 
                 stage('E2E') {
-                    agent{
-                        docker{
+                    agent {
+                        docker {
                             image 'mcr.microsoft.com/playwright:v1.39.0-jammy'
                             reuseNode true
                         }
@@ -59,17 +60,23 @@ pipeline {
                             npx playwright test --reporter=html
                         '''
                     }
-                    post{
-                        always{
-                            publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, icon: '', keepAll: false, reportDir: 'playwright-report', reportFiles: 'index.html', reportName: 'HTML Report', reportTitles: '', useWrapperFileDirectly: true])
+                    post {
+                        always {
+                            publishHTML([
+                                allowMissing: false,
+                                alwaysLinkToLastBuild: false,
+                                icon: '',
+                                keepAll: false,
+                                reportDir: 'playwright-report',
+                                reportFiles: 'index.html',
+                                reportName: 'HTML Report',
+                                reportTitles: '',
+                                useWrapperFileDirectly: true
+                            ])
                         }
                     }
                 }
-
             }
         }
-        
     }
-
-    
 }
