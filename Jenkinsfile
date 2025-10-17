@@ -92,5 +92,6 @@ pipeline {
                     netlify --version
                 '''
             }
+        }
     }
 }
