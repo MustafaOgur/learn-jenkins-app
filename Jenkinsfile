@@ -17,6 +17,7 @@ pipeline {
             }
             steps {
                 sh '''
+                    echo "Small change"
                     npm ci
                     npm run build
                 '''
