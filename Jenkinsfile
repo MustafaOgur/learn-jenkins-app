@@ -3,6 +3,7 @@ pipeline {
 
     environment{
         REACT_APP_VERSION = "1.0.$BUILD_ID"
+        APP_NAME = 'learnjenkinsapp'
         AWS_DEFAULT_REGION = 'us-east-2'
         AWS_ECS_CLUSTER = 'LearnJenkinsApp-Cluster-Prod'
         AWS_ECS_SERVICE_PROD = 'LearnJenkinsApp-TaskDefinition-Prod-service-h425laeu'
@@ -27,11 +28,27 @@ pipeline {
         //     }
         // }
 
+        stage('Build Docker image') {
+            agent{
+                docker{
+                    image 'my-aws-cli'
+                    args "-u root -v /var/run/docker.sock:/var/run/docker.sock --entrypoint=''"
+                    reuseNode true
+                }
+            }
+
+            steps {
+                sh '''
+                    docker build -t $APP_NAME:$REACT_APP_VERSION .
+                '''
+            }
+        }
+
         stage('Deploy to AWS') {
             agent{
                 docker{
-                    image 'amazon/aws-cli'
-                    args "-u root --entrypoint=''"
+                    image 'my-aws-cli'
+                    args "--entrypoint=''"
                     reuseNode true
                 }
             }
@@ -40,7 +57,6 @@ pipeline {
                 withCredentials([usernamePassword(credentialsId: 'my-aws', passwordVariable: 'AWS_SECRET_ACCESS_KEY', usernameVariable: 'AWS_ACCESS_KEY_ID')]) {
                     sh '''
                         aws --version
-                        yum install jq -y
                         LATEST_TD_REVISION=$(aws ecs register-task-definition --cli-input-json file://aws/task-definition.json --region $AWS_DEFAULT_REGION | jq '.taskDefinition.revision')
                         echo $LATEST_TD_REVISION
                         aws ecs update-service --cluster $AWS_ECS_CLUSTER --service $AWS_ECS_SERVICE_PROD --task-definition $AWS_ECS_TD_PROD:$LATEST_TD_REVISION
